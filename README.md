@@ -1,20 +1,45 @@
 # 机器学习优化函数
-* linear_regression.py：线性回归
-* grandent_descent.py：梯度下降
-* SGD.py：随机梯度下降
-* minibatch_SGD.py：minibatch SGD
-* momentum.py：动量
-* momentum_SGD.py：动量 SGD
-* Nesterov_momentum.py
-* adagrad.py: adagrad
-* adadelta.py: adadelta
-* adam.py: adam
+
+1、线性回归
+
+线性模型：y = ax + b
+
+Loss方法：Mean Squared Error (MSE), 即均方差
+
+![mse](pic/loss-mse.jpg)
+
+实验：
+
+```
+▶ python 1_linear_regression.py
+loss = 0.013575
+```
+
+结果图：
+
+![1](pic/1.jpg)
+
+
+
+grandent_descent.py：梯度下降
+
+SGD.py：随机梯度下降
+
+minibatch_SGD.py：minibatch SGD
+
+momentum.py：动量
+
+momentum_SGD.py：动量 SGD
+
+Nesterov_momentum.py
+
+adagrad.py: adagrad
+
+adadelta.py: adadelta
+
+adam.py: adam
 
 ### 算法
-
-$$c_n^2$$
-
-$f(x)=w^Tx+b$ 
 
 
 
