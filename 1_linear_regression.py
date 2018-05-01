@@ -19,7 +19,7 @@ if __name__ == '__main__':
 	loss = sum(np.square(np.round(yp-y,4))) / (2*len(x))
 	print("loss = %f" % loss)
 
-	plt.figure(u'线性回归')
+	plt.figure(u'线性回归', figsize=(6,5))
 	plt.xlabel(u"x轴")
 	plt.ylabel(u"y轴")
 
