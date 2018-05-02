@@ -25,7 +25,9 @@ loss = 0.013575
 
 $$x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}$$
 
-{loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2 }
+\\(x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}\\)
+
+$${loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2 }$$
 
 \\({loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2 }\\)
 
