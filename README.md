@@ -23,10 +23,15 @@ loss = 0.013575
 
 每一次迭代按照一定的学习率 αα 沿梯度的反方向更新参数，直至收敛。
 
-<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=default"></script>
 $$x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}$$
 
-ax^{2} + by^{2} + c = 0
+{loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2 }
+
+\\({loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2 }\\)
+
+\\(loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2 \\)
+
+
 
 grandent_descent.py：梯度下降
 
