@@ -1,12 +1,16 @@
 # 机器学习优化函数
 
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
 1、线性回归
 
-线性模型：y = ax + b
+线性模型：\\(y_{p,i}=ax_i+b\\)
 
 Loss方法：Mean Squared Error (MSE), 即均方差
 
-![mse](pic/loss-mse.jpg)
+$$loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2$$
 
 实验：
 
@@ -23,6 +27,40 @@ loss = 0.013575
 
 每一次迭代按照一定的学习率 αα 沿梯度的反方向更新参数，直至收敛。
 
+\\(y_{p,i}=ax_i+b\\)
+
+\\({loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2 }\\)
+
+合并方程
+$${loss=\frac{1}{m}\sum_{i=1}^m\frac12(ax_i+b-y_i)^2 }$$
+
+一共有m个累加项，单独提取一项：
+$${loss_{i}=\frac{1}{2}(ax_i+b-y_i)^2 }$$
+
+分别对要优化的参数 a, b 求导:
+$$\frac{\partial loss_{i}}{\partial a}=(ax_i+b-y_i)x_i$$
+$$\frac{\partial loss_{i}}{\partial b}=(ax_i+b-y_i)$$
+
+再累加起来：
+$$\frac{\partial loss}{\partial a}=\frac{1}{m}\sum_{i=1}^m\frac{\partial loss_{i}}{\partial a}$$
+$$\frac{\partial loss}{\partial b}=\frac{1}{m}\sum_{i=1}^m\frac{\partial loss_{i}}{\partial b}$$
+
+更新参数：
+$$a_{new}=a-\alpha \nabla a$$
+$$b_{new}=b-\alpha \nabla b$$
+
+实验图片：
+![gd](pic/2-gd.jpg)
+
+
+
+$$x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}$$
+\\(x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}\\)
+
+
+
+MathJax 公式测试:
+
 $$x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}$$
 
 \\(x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}\\)
@@ -33,7 +71,7 @@ $${loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2 }$$
 
 \\(loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2 \\)
 
-
+\\(x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}\\)
 
 grandent_descent.py：梯度下降
 
