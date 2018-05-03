@@ -6,30 +6,25 @@
 
 1、线性回归
 
-线性模型：\\(y_{p,i}=ax_i+b\\)
+线性模型：$$y_{p,i}=ax_i+b$$
 
 Loss方法：Mean Squared Error (MSE), 即均方差
 
 $$loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2$$
 
 实验：
-
 ```
 ▶ python 1_linear_regression.py
 loss = 0.013575
 ```
-
 结果图：
-
 ![1](pic/1.jpg)
 
 2、梯度下降
 
 每一次迭代按照一定的学习率 αα 沿梯度的反方向更新参数，直至收敛。
-
-\\(y_{p,i}=ax_i+b\\)
-
-\\({loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2 }\\)
+$$y_{p,i}=ax_i+b$$
+$${loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2 }$$
 
 合并方程
 $${loss=\frac{1}{m}\sum_{i=1}^m\frac12(ax_i+b-y_i)^2 }$$
@@ -49,29 +44,23 @@ $$\frac{\partial loss}{\partial b}=\frac{1}{m}\sum_{i=1}^m\frac{\partial loss_{i
 $$a_{new}=a-\alpha \nabla a$$
 $$b_{new}=b-\alpha \nabla b$$
 
-实验图片：
+实验：
+```
+▶ python 2_grandent_descent.py
+('step: ', 1, ' loss: ', 129.67006756542807)
+('step: ', 2, ' loss: ', 12.373533308688465)
+('step: ', 3, ' loss: ', 10.469877474959096)
+('step: ', 4, ' loss: ', 8.8801567453812922)
+...
+('step: ', 98, ' loss: ', 0.0055166947123678148)
+('step: ', 99, ' loss: ', 0.0055164418039771283)
+```
+
+结果图片：
 ![gd](pic/2-gd.jpg)
 
 
 
-$$x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}$$
-\\(x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}\\)
-
-
-
-MathJax 公式测试:
-
-$$x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}$$
-
-\\(x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}\\)
-
-$${loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2 }$$
-
-\\({loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2 }\\)
-
-\\(loss=\frac{1}{2m}\sum_{i=1}^m(y_{p,i}-y_i)^2 \\)
-
-\\(x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}\\)
 
 grandent_descent.py：梯度下降
 
