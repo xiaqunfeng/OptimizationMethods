@@ -1,12 +1,13 @@
 #coding:utf-8
-# 本代码是一个最简单的线形回归问题，优化函数为经典的gradient descent
+# 本代码是一个最简单的线形回归问题，优化函数为minibatch SGD
 
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from util.data import data_init
+import random
+from util.data import data_init, shuffle_data, get_batch_data
 from util.calculate import da, db, calc_loss
-from util import draw 
+from util import draw
 
 rate = 0.1 # learning rate
 
@@ -22,7 +23,7 @@ if __name__ == '__main__':
     hallSSE = hallSSE.T
 
     # 初始化图片
-    plt.figure('grandent descent', figsize=(11, 7))
+    plt.figure('minibach SGD', figsize=(11, 7))
     # 绘制图1的曲面
     curved_surface = draw.draw_curved_surface(ha,hb,hallSSE)
     # 绘制图2的等高线图
@@ -38,14 +39,16 @@ if __name__ == '__main__':
         loss = 0
         all_da = 0
         all_db = 0
-        # 梯度下山
-        for i in range(0,len(x)):
-            y_prediction = a * x[i] + b
-            loss = loss + (y[i] - y_prediction)*(y[i] - y_prediction)/2
-            all_da = all_da + da(y[i], y_prediction,x[i])
-            all_db = all_db + db(y[i], y_prediction)
+        shuffle_data(x,y)
+        [x_new,y_new] = get_batch_data(x,y,batch=4)
+        # minibach sgd
+        for i in range(0,len(x_new)):
+            y_p = a*x_new[i] + b
+            loss = loss + (y_new[i] - y_p)*(y_new[i] - y_p)/2
+            all_da = all_da + da(y_new[i],y_p,x_new[i])
+            all_db = all_db + db(y_new[i],y_p)
         #loss_ = calc_loss(a = a,b=b,x=np.array(x),y=np.array(y))
-        loss = loss/len(x)
+        loss = loss/len(x_new)
 
         # 在图1的曲面上绘制 loss 点
         draw.draw_curved_surface_loss(a,b,loss,curved_surface)

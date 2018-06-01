@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from util.init import data_init
+from util.data import data_init
 
 
 if __name__ == '__main__':

@@ -1,5 +1,6 @@
 #coding:utf-8
 import numpy as np
+import random
 
 def data_init():
 	x = np.array([30,35,37,59,70,76,88,100]).astype(np.float32)
@@ -16,3 +17,17 @@ def data_init():
 	    y[i] = (y[i] - y_min)/(y_max - y_min)
 
 	return x,y
+
+def shuffle_data(x,y):
+    # 随机打乱x，y的数据，并且保持x和y一一对应
+    seed = random.random()
+    random.seed(seed)
+    random.shuffle(x)
+    random.seed(seed)
+    random.shuffle(y)
+
+def get_batch_data(x,y,batch=3):
+    shuffle_data(x,y)
+    x_new = x[0:batch]
+    y_new = y[0:batch]
+    return [x_new,y_new]
