@@ -44,8 +44,8 @@ if __name__ == '__main__':
         loss = 0
         all_da = 0
         all_db = 0
-        a_ahead = a - gamma*va
-        b_ahead = b - gamma*vb
+        a_ahead = a + gamma*va
+        b_ahead = b + gamma*vb
         [x_new,y_new] = get_batch_data(x,y,batch=4)
         for i in range(0,len(x_new)):
             y_p = a_ahead*x_new[i] + b_ahead
@@ -69,10 +69,10 @@ if __name__ == '__main__':
         last_a = a
         last_b = b
 
-        va = gamma*va + all_da
-        vb = gamma*vb + all_db
-        a = a - rate*va
-        b = b - rate*vb
+        va = gamma*va - rate*all_da
+        vb = gamma*vb - rate*all_db
+        a = a + va
+        b = b + vb
 
         if step%1 == 0:
             print("step: ", step, " loss: ", loss)

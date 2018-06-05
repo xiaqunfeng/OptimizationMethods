@@ -1,7 +1,12 @@
 # 机器学习优化函数
 > 注：如需正常显示公式，请在chrome浏览器中安装 [Github with MathJax](https://chrome.google.com/webstore/detail/github-with-mathjax/ioemnmodlmafdkllaclgeombjnmnbima) 插件
 
-[TOC]
+* [1、线性回归](#1线性回归)
+* [2、梯度下降](#2梯度下降)
+* [3、随机梯度下降（SGD）](#3随机梯度下降sgd)
+* [4、小批量随机梯度下降（minibath SGD）](#4小批量随机梯度下降minibath-sgd)
+* [5、动量法（momentum）](#5动量法momentum)
+* [6、Nesterov accelerated gradient (NAG)](#6nesterov-accelerated-gradient-nag)
 
 ## 1、线性回归
 
@@ -170,38 +175,38 @@ $$\frac{\partial loss_{batch}}{\partial b}=\frac{1}{k}\sum_{i=1}^k(ax_i+b-y_i)$$
 
 SGD 在遇到沟壑时容易陷入震荡。为此，可以为其引入动量 Momentum，加速 SGD 在正确方向的下降并抑制震荡。
 
-![sgd-m](pic/5-sgd-m.jpeg)
-
-如上图所示，A为起始点，首先计算A点的梯度∇a ，然后下降到B点，在原步长之上，增加了与上一时刻步长相关的`γ`，`γ`通常取 0.9 左右。这意味着参数更新方向不仅由当前的梯度决定，也与此前累积的下降方向有关。这使得参数中那些梯度方向变化不大的维度可以加速更新，并减少梯度方向变化较大的维度上的更新幅度。由此产生了加速收敛和减小震荡的效果。
-
-当我们将一个小球从山上滚下来时，没有阻力的话，它的动量会越来越大，但是如果遇到了阻力，速度就会变小。 
-加入的这一项，可以使得梯度方向不变的维度上速度变快，梯度方向有所改变的维度上的更新速度变慢，这样就可以加快收敛并减小震荡。
-
-缺点：这种情况相当于小球从山上滚下来时是在盲目地沿着坡滚，如果它能具备一些先知，例如快要上坡时，就知道需要减速了的话，适应性会更好。
+参数更新方向不仅由当前的梯度决定，也与此前累积的下降方向有关。这使得参数中那些梯度方向变化不大的维度可以加速更新，并减少梯度方向变化较大的维度上的更新幅度。由此产生了加速收敛和减小震荡的效果。
 
 ### 公式
 
-B点的参数更新公式：
+参数更新公式：
 
-$$v_t = \gamma v_{t-1} + \alpha \nabla b$$
+$$v_t = \gamma v_{t-1} + \eta \nabla_\theta J( \theta) \\$$ 
+$$\theta = \theta - v_t$$
 
-其中 Vt−1 表示之前所有步骤所累积的动量和。
+> Note: Some implementations exchange the signs in the equations. The momentum term γ is usually set to 0.9 or a similar value.
 
-参数更新同梯度下降。
+很多实现只是等式符号不同，我这里用的是上减下加。如下伪代码：
+
+```
+# Momentum update
+v = mu * v - learning_rate * dx # integrate velocity
+x += v # integrate position
+```
 
 ### 实验
 
 ```
 ▶ python 5_momentum.py
-('step: ', 1, ' loss: ', 146.73549720166068)
-('step: ', 2, ' loss: ', 87.415102431214322)
-('step: ', 3, ' loss: ', 16.702090489396895)
-('step: ', 4, ' loss: ', 31.977555057448985)
-('step: ', 5, ' loss: ', 21.190126419240112)
+('step: ', 1, ' loss: ', 142.78026539628002)
+('step: ', 2, ' loss: ', 57.026908010941987)
+('step: ', 3, ' loss: ', 14.878695379467619)
+('step: ', 4, ' loss: ', 27.956646187512142)
+('step: ', 5, ' loss: ', 76.121314278701405)
 ...
-('step: ', 97, ' loss: ', 0.032100060863960431)
-('step: ', 98, ' loss: ', 0.016148515230792779)
-('step: ', 99, ' loss: ', 0.046971139791802639)
+('step: ', 97, ' loss: ', 0.0050963082785009679)
+('step: ', 98, ' loss: ', 0.0025215223884579186)
+('step: ', 99, ' loss: ', 0.0260781190424971)
 ```
 
  结果图片：
@@ -214,40 +219,58 @@ $$v_t = \gamma v_{t-1} + \alpha \nabla b$$
 
 ## 6、Nesterov accelerated gradient (NAG)
 
-仅仅有一个追求速度的球往山下滚是不能令人满意的，我们需要一个球，它能知道往前一步的信息，并且当山坡再次变陡时他能够减速。因此，带有nesterov的出现了！
+该方法与动量类似，也是考虑最近的梯度情况，但是NAG相对超前一点，使用动量计算参数下一个位置的近似值，然后在这近似值位置上计算梯度。
 
-![1](pic/6-NAG-1.jpeg)
-
-![NAG](pic/6-NAG.jpg)
+![6-0](pic/6-NAG.jpg)
 
 在momentum里，先计算当前的梯度（短蓝色线），然后结合以前的梯度执行更新（长蓝色线）。而在nesterov momentum里，先根据事先计算好的梯度更新（棕色），然后在预计的点处计算梯度（红色），结合两者形成真正的更新方向（绿色）。 
 
-这是对之前的Momentum的一种改进,大概思路就是，先对参数进行估计（先往前看一步，探路），然后使用估计后的参数来计算误差 
+再来两张图比较momentum和NAG的区别：
+
+![6-1](pic/momentum-vs-NAG.jpg)
+
+![6-1](pic/momentum-vs-NAG-1.jpg)
+
+图参考：[Nesterov’s Accelerated Gradient, Stochastic Gradient Descent](http://mitliagkas.github.io/ift6085/ift-6085-lecture-6-notes.pdf)
 
 ### 公式
 
+参数更新公式
 
+$$v_t = \gamma v_{t-1} + \eta \nabla_\theta J( \theta - \gamma v_{t-1} ) \\  $$
+$$\theta = \theta - v_t$$
 
-### 实验
+代码中我用的仍然是上减下加。伪代码如下：
+
+```
+x_ahead = x + mu * v
+# evaluate dx_ahead (the gradient at x_ahead instead of at x)
+v = mu * v - learning_rate * dx_ahead
+x += v
+```
+
+###实验
 
 ```
 ▶ python 6_NAG.py
-('step: ', 1, ' loss: ', 123.97588519336801)
-('step: ', 2, ' loss: ', 3.6992921922744024)
-('step: ', 3, ' loss: ', 59.623327324378536)
-('step: ', 4, ' loss: ', 19.32654187645505)
-('step: ', 5, ' loss: ', 12.547054418230081)
+('step: ', 1, ' loss: ', 146.04743572162121)
+('step: ', 2, ' loss: ', 35.977107943103498)
+('step: ', 3, ' loss: ', 6.0189021621300283)
+('step: ', 4, ' loss: ', 19.533286578486837)
+('step: ', 5, ' loss: ', 54.562743141431682)
 ...
-('step: ', 97, ' loss: ', 0.0056560557885627638)
-('step: ', 98, ' loss: ', 0.015449818463141236)
-('step: ', 99, ' loss: ', 0.0069614078409119635)
+('step: ', 97, ' loss: ', 0.0048164795494216803)
+('step: ', 98, ' loss: ', 0.0030005463443346873)
+('step: ', 99, ' loss: ', 0.0086091962512396744)
 ```
 
 结果图片：
 
 ![6-0](pic/NAG.png)
 
-评价：效果非常好，相比较动量法，效果好太多了。因为用到了二阶信息。
+评价：相比较动量法，NAG方法收敛速度明显加快，波动也小了很多。因为NAG考虑了目标函数的二阶导数信息，而梯度下降是一阶收敛。二阶其实相当于考虑了梯度的梯度，所以相对更快。粗略的说，n阶收敛，相当于以n阶的速度逼近一个值。
+
+具体可参看：[比Momentum更快：揭开Nesterov Accelerated Gradient的真面目](https://zhuanlan.zhihu.com/p/22810533)
 
 adagrad.py: adagrad
 
@@ -257,24 +280,12 @@ adam.py: adam
 
 
 
-#### 来源
+**参考资料：**
 
-代码来源于以下博客系列文章，稍作改动和重构
+http://ruder.io/optimizing-gradient-descent/index.html
 
-http://blog.csdn.net/column/details/19920.html
+http://cs231n.github.io/neural-networks-3/
 
-#### 参考
+https://zhuanlan.zhihu.com/p/22252270
 
-p1 参考 https://zhuanlan.zhihu.com/p/27297638
-
-p2~pn 参考 http://ruder.io/optimizing-gradient-descent/index.html
-
-###### 单独参考
-
-p5 参考 http://cs231n.github.io/neural-networks-3/
-
-p6 参考 https://zhuanlan.zhihu.com/p/22252270
-
-p7 参考 https://arxiv.org/abs/1212.5701 (原始论文)
-
-p8 参考 http://www.ijiandao.com/2b/baijia/63540.html
+http://www.ijiandao.com/2b/baijia/63540.html

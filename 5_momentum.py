@@ -72,10 +72,11 @@ if __name__ == '__main__':
         a = a - va
         b = b - vb
         '''
-        va = gamma*va + all_da
-        vb = gamma*vb + all_db
-        a = a - rate*va
-        b = b - rate*vb
+        va = gamma*va - rate*all_da
+        vb = gamma*vb - rate*all_db
+        a = a + va
+        b = b + vb
+
         if step%1 == 0:
             print("step: ", step, " loss: ", loss)
             plt.show()
