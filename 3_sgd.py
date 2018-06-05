@@ -9,7 +9,7 @@ from util.data import data_init, shuffle_data
 from util.calculate import da, db, calc_loss
 from util import draw
 
-rate = 0.1 # learning rate
+rate = 0.25 # learning rate
 
 if __name__ == '__main__':    
     #  模拟数据
@@ -24,6 +24,8 @@ if __name__ == '__main__':
 
     # 初始化图片
     fig = plt.figure('SGD', figsize=(11, 7))
+    fig.suptitle('Learning Rate: %.2f  Method: SGD'%(rate), fontsize=15)
+
     # 绘制图1的曲面
     curved_surface = draw.draw_curved_surface(ha,hb,hallSSE)
     # 绘制图2的等高线图

@@ -9,7 +9,7 @@ from util.data import data_init, shuffle_data, get_batch_data
 from util.calculate import da, db, calc_loss
 from util import draw
 
-rate = 0.1 # learning rate
+rate = 0.25 # learning rate
 
 if __name__ == '__main__':
     #  模拟数据
@@ -23,7 +23,9 @@ if __name__ == '__main__':
     hallSSE = hallSSE.T
 
     # 初始化图片
-    plt.figure('minibach SGD', figsize=(11, 7))
+    plt.figure('minibach-SGD', figsize=(11, 7))
+    plt.suptitle('Learning Rate: %.2f  Method: minibach-SGD'%(rate), fontsize=15)
+
     # 绘制图1的曲面
     curved_surface = draw.draw_curved_surface(ha,hb,hallSSE)
     # 绘制图2的等高线图
@@ -39,7 +41,6 @@ if __name__ == '__main__':
         loss = 0
         all_da = 0
         all_db = 0
-        shuffle_data(x,y)
         [x_new,y_new] = get_batch_data(x,y,batch=4)
         # minibach sgd
         for i in range(0,len(x_new)):
@@ -48,6 +49,7 @@ if __name__ == '__main__':
             all_da = all_da + da(y_new[i],y_p,x_new[i])
             all_db = all_db + db(y_new[i],y_p)
         #loss_ = calc_loss(a = a,b=b,x=np.array(x),y=np.array(y))
+        all_da, all_db = all_da/len(x_new), all_db/len(x_new)
         loss = loss/len(x_new)
 
         # 在图1的曲面上绘制 loss 点
