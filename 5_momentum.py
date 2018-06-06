@@ -66,12 +66,7 @@ if __name__ == '__main__':
         # 更新参数
         last_a = a
         last_b = b
-        '''
-        va = gamma*va + rate*all_da
-        vb = gamma*vb + rate*all_db
-        a = a - va
-        b = b - vb
-        '''
+
         va = gamma*va - rate*all_da
         vb = gamma*vb - rate*all_db
         a = a + va
