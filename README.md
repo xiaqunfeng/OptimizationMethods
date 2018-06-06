@@ -286,7 +286,7 @@ adagrad方法对每一个参数在每一步都使用不同的学习率，将每�
 
 为了简便，用 $g_t$ 表示在时间步 t 处的梯度，$g_{t,i}$ 表示目标函数对参数 $\theta_i$ 在时间步 t 处的偏导。
 
-$g_{t, i} = \nabla_\theta J( \theta_{t, i} )$
+$$g_{t, i} = \nabla_\theta J( \theta_{t, i} )$$
 
 对于经典的SGD优化函数，对每个参数 $\theta_i$ 在每个时间步 t，更新公式如下：
 
@@ -296,7 +296,7 @@ $$\theta_{t+1,i}=\theta_{t,i} - \eta \cdot g_{t,i}$$
 
 $$\theta_{t+1,i}=\theta_{t,i}- \frac{\eta}{\sqrt{G_{t,i}+\epsilon}} \cdot g_{t,i}$$
 
-其中t表示每一次迭代，$$\epsilon$$ 为一个极小值，防止分母为0，通常为 1e-8。
+其中t表示每一次迭代，$\epsilon$ 为一个极小值，防止分母为0，通常为 1e-8。
 
 $G_{i,t}$ 表示前 t 步参数 $\theta_i$ 梯度的累加:
 
@@ -333,21 +333,88 @@ x += - learning_rate * dx / (np.sqrt(cache) + eps)
 
 > 可以看出收敛速度的确是特别慢，学习率低到可怜，我已经将初始学习率设为0.4了，原因参见上面说的缺点。
 
-8、adadelta
+## 8、adadelta
 
 这个算法是对 Adagrad 的改进，旨在减少adagrad积极单调降低的学习率。和 Adagrad 相比，adadelta并不积累过去所有的梯度平方，而是只积累固定大小的项。
 
-公式
+### 公式
+
+之前梯度的总和递归的定义为过去所有梯度平方的平均，现在，在时间 t 处，梯度平方的平均 $E[g^2]_t$ 取决于先前的平均值和当前的梯度 ：
+
+$$E[g^2]_t = \gamma E[g^2]_{t-1} + (1 - \gamma) g^2_t$$
+
+$\gamma$ 和 momtentum 中类似，也为0.9。
+
+为了清晰，用参数更新矢量 $\Delta \theta_t$ 来重写SGD的更新：
+
+$$\Delta \theta_t = - \eta \cdot g_{t, i}$$
+
+$$\theta_{t+1} = \theta_t + \Delta \theta_t$$
+
+参数更新矢量重写adagrad更新：
+
+$$\Delta \theta_t = - \dfrac{\eta}{\sqrt{G_{t} + \epsilon}} \odot g_{t}$$
+
+现在简单的用过去平方梯度的衰减平均值 $E[g^2]_t$ 来替代对角矩阵 $G_t$ ：
+
+$$\Delta \theta_t = - \dfrac{\eta}{\sqrt{E[g^2]_t + \epsilon}} g_{t}$$
+
+由于分母只是梯度的均方根root mean squared（RMS）误差准则，所以可以用简写来替代它：
+
+$$\Delta \theta_t = - \dfrac{\eta}{RMS[g]_{t}} g_t$$
+
+作者指出，此更新中的单位（以及SGD，Momentum或Adagrad）不匹配，即更新应该与参数具有相同的假设单位（而不是梯度）。为了实现这一点，他们首先定义了另一个指数衰减的平均值，这次不是平方梯度，而是平方参数更新：
+
+$$E[\Delta \theta^2]_t = \gamma E[\Delta \theta^2]_{t-1} + (1 - \gamma) \Delta \theta^2_t$$
+
+参数更新的均方根误差：
+
+$$RMS[\Delta \theta]_{t} = \sqrt{E[\Delta \theta^2]_t + \epsilon}$$
+
+用 $RMS[\Delta \theta]_{t-1}$ 来代替学习率 $\eta$ ，得到新的更新规则：
+
+$$\Delta \theta_t = - \dfrac{RMS[\Delta \theta]_{t-1}}{RMS[g]_{t}} g_{t}$$
+
+$$\theta_{t+1} = \theta_t + \Delta \theta_t$$
+
+此时，我们甚至都不需要设置默认的学习率，因为参数更新规则已经不受它影响了。
+
+### 实验
+
+```
+▶ python 8_adadelta.py
+('step: ', 1, ' loss: ', 129.67006756542807, 'rms_theta/rms_g:', array([ 0.00250418,  0.00250418], dtype=float32))
+('step: ', 2, ' loss: ', 124.0088104228617, 'rms_theta/rms_g:', array([ 0.00197095,  0.00260129]))
+('step: ', 3, ' loss: ', 118.58396330052152, 'rms_theta/rms_g:', array([ 0.00172271,  0.00266956]))
+('step: ', 4, ' loss: ', 113.36052966432771, 'rms_theta/rms_g:', array([ 0.00157467,  0.00272375]))
+('step: ', 5, ' loss: ', 108.33161470256843, 'rms_theta/rms_g:', array([ 0.00147579,  0.00276966]))
+...
+('step: ', 97, ' loss: ', 5.2284673996315023, 'rms_theta/rms_g:', array([ 0.01625883,  0.01534139]))
+('step: ', 98, ' loss: ', 5.0965586036092185, 'rms_theta/rms_g:', array([ 0.01726585,  0.01591376]))
+('step: ', 99, ' loss: ', 4.9608085851769861, 'rms_theta/rms_g:', array([ 0.01834156,  0.01650829]))
+```
+
+结果图片：
+
+![8-0](pic/adadelta.png)
+
+> 注：这里用的是批量的数据做迭代，不然图太难看了
+
+## 9、RMSprop
+
+与adadelta算法的第一种形式相同
+
+$$E[g^2]_t = \eta E[g^2]_{t-1} + (1-\eta) g^2_t$$
+
+$$\theta_{t+1} = \theta_{t} - \dfrac{\eta}{\sqrt{E[g^2]_t + \epsilon}} g_{t}$$
+
+作者建议将 $\eta$ 设为0.9，学习率 $\eta$ 设为 0.001。
 
 
 
-实验
 
 
 
-这个分母相当于梯度的均方根 root mean squared (RMS) ，所以可以用 RMS 简写
-
-其中 E 的计算公式如下，t 时刻的依赖于前一时刻的平均和当前的梯度
 
 adam.py: adam
 
