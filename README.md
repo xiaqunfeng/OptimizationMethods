@@ -1,12 +1,7 @@
 # 机器学习优化函数
 > 注：如需正常显示公式，请在chrome浏览器中安装 [Github with MathJax](https://chrome.google.com/webstore/detail/github-with-mathjax/ioemnmodlmafdkllaclgeombjnmnbima) 插件
 
-* [1、线性回归](#1线性回归)
-* [2、梯度下降](#2梯度下降)
-* [3、随机梯度下降（SGD）](#3随机梯度下降sgd)
-* [4、小批量随机梯度下降（minibath SGD）](#4小批量随机梯度下降minibath-sgd)
-* [5、动量法（momentum）](#5动量法momentum)
-* [6、Nesterov accelerated gradient (NAG)](#6nesterov-accelerated-gradient-nag)
+[TOC]
 
 ## 1、线性回归
 
@@ -408,17 +403,106 @@ $$E[g^2]_t = \eta E[g^2]_{t-1} + (1-\eta) g^2_t$$
 
 $$\theta_{t+1} = \theta_{t} - \dfrac{\eta}{\sqrt{E[g^2]_t + \epsilon}} g_{t}$$
 
-作者建议将 $\eta$ 设为0.9，学习率 $\eta$ 设为 0.001。
+作者建议将 $\eta$ 设为0.9，学习率 $\eta$ 设为 0.001
 
+伪代码：
 
+```
+cache = decay_rate * cache + (1 - decay_rate) * dx**2
+x += - learning_rate * dx / (np.sqrt(cache) + eps)
+```
 
+## 10、Adaptive Moment Estimation(adam)
 
+自适应矩估计（Adam）是计算每个参数的自适应学习率的另一种方法。除了像Adadelta和RMSprop存储指数衰减的过去平方梯度的平均值 $v_t$ 之外，Adam还保持了过去梯度 $m_t$ 的指数衰减平均值，类似于动量。过去梯度和平方梯度的衰减平均值如下：
 
+$$m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t$$
 
+$$v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2 $$
 
-adam.py: adam
+其中 $m_t$ 和 $v_t$ 分别是梯度的一阶矩估计和二阶矩估计。由于二者被初始化为0的向量，作者观察到它们偏向0，特别是在最初的时间步骤中，特别是当衰减率很小时（$\beta_1$ 和 $\beta_2$ 接近1）。
 
+通过计算偏差校正的一阶和二阶矩估计来抵消偏差，近似无偏估计：
 
+$$\hat{m}_t = \dfrac{m_t}{1 - \beta^t_1}$$
+
+$$\hat{v}_t = \dfrac{v_t}{1 - \beta^t_2}$$
+
+然后用它们来更新参数：
+
+$$\theta_{t+1} = \theta_{t} - \dfrac{\eta}{\sqrt{\hat{v}_t} + \epsilon} \hat{m}_t$$
+
+作者建议的默认值：$\beta_1 = 0.9$，$\beta_2 = 0.999$，$\epsilon = 10^{-8}$
+
+实践经验表明，Adam在实践中表现良好，并且与其他自适应学习方法算法相比更有优势。
+
+Adam 结合了 AdaGrad 和 RMSProp 算法最优的性能，它还是能提供解决稀疏梯度和噪声问题的优化方法。
+
+Adam 的调参相对简单，默认参数就可以处理绝大部分的问题。
+
+伪代码：
+
+```
+# t is your iteration counter going from 1 to infinity
+m = beta1*m + (1-beta1)*dx
+mt = m / (1-beta1**t)
+v = beta2*v + (1-beta2)*(dx**2)
+vt = v / (1-beta2**t)
+x += - learning_rate * mt / (np.sqrt(vt) + eps)
+```
+
+### 实验
+
+```
+▶ python 10_adam.py
+('step: ', 1, ' loss: ', 129.67006756542807)
+('step: ', 2, ' loss: ', 129.64820770265246)
+('step: ', 3, ' loss: ', 129.61883517467558)
+('step: ', 4, ' loss: ', 129.58462519945039)
+('step: ', 5, ' loss: ', 129.5470260748383)
+...
+('step: ', 197, ' loss: ', 124.7207718921178)
+('step: ', 198, ' loss: ', 124.70495040750595)
+('step: ', 199, ' loss: ', 124.68916675811745)
+```
+
+结果图片：
+
+![10-0](pic/adam.png)
+
+> adam算法对于大规模的深度学习应用效果会更好，故在当前小规模的简单凸函数优化问题上收敛速度并不快
+
+## 11、adamax
+
+TODO
+
+## 12、nadam
+
+TODO
+
+## 总结
+
+### 算法对比
+
+loss表面轮廓图：
+
+![0](pic/contours_evaluation_optimizers.gif)
+
+如上图所示：Adagrad，Adadelta和RMSprop几乎立刻朝着正确的方向前进，并且同样快速地收敛，而Momentum和NAG则走向偏离轨道，引发了一个滚下山丘的形象。然而，NAG很快就能够通过"向前看"来快速响应并纠正方向，并达到最小值。
+
+鞍点图:
+
+![11](pic/saddle_point_evaluation_optimizers.gif)
+
+SGD，Momentum和NAG很难破除对称性，尽管后者最终设法摆脱了鞍点，而Adagrad，RMSprop和Adadelta迅速降低了负斜率。
+
+自适应学习速率方法，即Adagrad，Adadelta，RMSprop和Adam是最合适的，并为这些情景提供最佳收敛。
+
+### 算法选择
+
+如果您的输入数据稀少，那么您可能会使用自适应学习率方法中的一种获得最佳结果。另外一个好处是，你不需要调整学习速率，却可以使用默认值得到最佳结果。
+
+总之，RMSprop是Adagrad的延伸，它处理其学习速度急剧下降的问题。它与Adadelta相同，只是Adadelta在分子更新规则中使用RMS参数更新。 Adam最后为RMSprop增加了偏差修正和动量。就此而言，RMSprop，Adadelta和Adam是非常相似的算法，在相似的情况下效果很好。 偏差修正有助于Adam在优化结束时略微优于RMSprop，因为梯度变得更加稀疏。就目前而言，Adam可能是最好的综合选择。
 
 **参考资料：**
 
@@ -427,5 +511,3 @@ http://ruder.io/optimizing-gradient-descent/index.html
 http://cs231n.github.io/neural-networks-3/
 
 https://zhuanlan.zhihu.com/p/22252270
-
-http://www.ijiandao.com/2b/baijia/63540.html
