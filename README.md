@@ -1,7 +1,23 @@
 # 机器学习优化函数
 > 注：如需正常显示公式，请在chrome浏览器中安装 [Github with MathJax](https://chrome.google.com/webstore/detail/github-with-mathjax/ioemnmodlmafdkllaclgeombjnmnbima) 插件
 
-[TOC]
+**目  录：**
+
+  * [1、线性回归](#1线性回归)
+  * [2、梯度下降](#2梯度下降)
+  * [3、随机梯度下降（SGD）](#3随机梯度下降sgd)
+  * [4、小批量随机梯度下降（minibath SGD）](#4小批量随机梯度下降minibath-sgd)
+  * [5、动量法（momentum）](#5动量法momentum)
+  * [6、Nesterov accelerated gradient (NAG)](#6nesterov-accelerated-gradient-nag)
+  * [7、adagrad](#7adagrad)
+  * [8、adadelta](#8adadelta)
+  * [9、RMSprop](#9rmsprop)
+  * [10、Adaptive Moment Estimation(adam)](#10adaptive-moment-estimationadam)
+  * [11、adamax](#11adamax)
+  * [12、nadam](#12nadam)
+  * [总结](#总结)
+     * [算法对比](#算法对比)
+     * [算法选择](#算法选择)
 
 ## 1、线性回归
 
@@ -474,11 +490,75 @@ x += - learning_rate * mt / (np.sqrt(vt) + eps)
 
 ## 11、adamax
 
-TODO
+该方法是基于无穷范数的Adam方法的变体。
+
+adam方法中的 $v_t$ 因子按照过去梯度（通过 $v_{t-1}$ 项）和当前梯度 $|g_t|^2$ 的L2正则成反比例的调整梯度:
+
+$$v_t = \beta_2 v_{t-1} + (1 - \beta_2) |g_t|^2$$
+
+可以将此更新泛化成Lp正则:
+
+$$v_t = \beta_2^p v_{t-1} + (1 - \beta_2^p) |g_t|^p$$
+
+p特别大的范式通常在数值上不稳定，这就是为什么L1和L2范式在实践中常见的原因。出于这个原因，作者提出adamax并且证明L无穷大下的 $v_t$ 收敛于一个更稳定的值。为了避免和 adam中混淆，使用 $u_t$ 来表示无穷范数约束下的 $v_t$ ：
+
+$$\begin{align} \begin{split} u_t &= \beta_2^\infty v_{t-1} + (1 - \beta_2^\infty) |g_t|^\infty\\   & = \max(\beta_2 \cdot v_{t-1}, |g_t|) \end{split} \end{align}$$
+
+然后将此公式插入 adam 更新公式中，取代 $\sqrt{\hat{v}_t} + \epsilon$ ：
+
+$$\theta_{t+1} = \theta_{t} - \dfrac{\eta}{u_t} \hat{m}_t$$
+
+> 由于 $u_t$ 依赖于最大操作，所以并不像adam算法中的 $m_t$ 和 $v_t$ 一样偏向于0，这就是为什么不需要再为 $u_t$ 计算偏差矫正的原因。
+
+建议默认值: $\eta = 0.002, \beta_1 = 0.9, \beta_2 = 0.999$
 
 ## 12、nadam
 
-TODO
+如之前所述，adam可以看做 RMSprop和momentum方法的组合：RMSprop贡献了过去平方梯度 $v_t$ 的指数衰减平均值，而momentum考虑了过去梯度 $m_t$ 的指数衰减平均值。同时，Nesterov accelerated gradient (NAG)优于普通momentum方法。
+
+Nadam (Nesterov-accelerated Adaptive Moment Estimation) 因此组合 Adam 和NAG方法。为了将NAG纳入adam中，这里需要修改动量术语 $m_t$ 。
+
+首先，回顾一下动量更新规则中目前使用的标注符号：
+
+$$\begin{align} \begin{split} g_t &= \nabla_{\theta_t}J(\theta_t)\\ m_t &= \gamma m_{t-1} + \eta g_t\\ \theta_{t+1} &= \theta_t - m_t\end{split}\end{align}$$
+
+其中 $J$ 是目标函数，$\gamma$ 是动量衰减项，$\eta$ 是学习步长。
+
+$$\theta_{t+1} = \theta_t - ( \gamma m_{t-1} + \eta g_t)$$
+
+该公式再次表明动量涉及向之前的动量矢量方向迈出一步，并沿当前梯度的方向上迈出一步。 
+
+NAG然后允许我们在梯度方向上执行更精确的步骤，方法是在计算梯度之前用动量步长更新参数。因此，我们只需要修改梯度 $g_t$ 到达NAG：
+
+$$\begin{align} \begin{split} g_t &= \nabla_{\theta_t}J(\theta_t - \gamma m_{t-1})\\ m_t &= \gamma m_{t-1} + \eta g_t\\  \theta_{t+1} &= \theta_t - m_t\end{split}\end{align}$$ 
+
+Dozat提出以如下方式修改NAG：相比于将动量步骤应用两次（一次用于更新梯度$g_t$，第二次用于更新参数$\theta_(t+1)$），现在应用前瞻动量矢量来直接更新当前参数：
+
+$$\begin{align}\begin{split}g_t &= \nabla_{\theta_t}J(\theta_t)\\   m_t &= \gamma m_{t-1} + \eta g_t\\ \theta_{t+1} &= \theta_t - (\gamma m_t + \eta g_t)\end{split}\end{align}$$
+
+注意，现在使用当前的动量向量 $m_t$ 来展望，而不是像上面的扩展动量更新规则的等式那样利用先前的动量向量 $m_{t-1}$。为了将 Nesterov动量加入adam中，我们可以类似地用当前动量向量代替以前的动量向量。
+
+首先，回忆之前的adam更新规则(注意没必要修改 $\hat{v}_t$)：
+
+$$\begin{align} \begin{split}m_t &= \beta_1 m_{t-1} + (1 - \beta_1) g_t\\  \hat{m}_t & = \frac{m_t}{1 - \beta^t_1}\\\theta_{t+1} &= \theta_{t} - \frac{\eta}{\sqrt{\hat{v}_t} + \epsilon} \hat{m}_t\end{split}\end{align}$$
+
+用 $m_t$ 和 $\hat{m}_t$ 的定义来扩展第三个公式:
+
+$$\theta_{t+1} = \theta_{t} - \dfrac{\eta}{\sqrt{\hat{v}_t} + \epsilon} (\dfrac{\beta_1 m_{t-1}}{1 - \beta^t_1} + \dfrac{(1 - \beta_1) g_t}{1 - \beta^t_1})$$
+
+发现公式 $\dfrac{\beta_1 m_{t-1}}{1 - \beta^t_1}$ 只是前一时间步动量向量的偏差矫正估计值，因此可以用 $\hat{m}_{t-1}$ 来替代它：
+
+$$\theta_{t+1} = \theta_{t} - \dfrac{\eta}{\sqrt{\hat{v}_t} + \epsilon} (\beta_1 \hat{m}_{t-1} + \dfrac{(1 - \beta_1) g_t}{1 - \beta^t_1})$$
+
+该方程再次看起来非常类似于我们上面扩展的动量更新规则。我们现在可以像以前那样扩展Nesterov动量一样，用当前动量向量的偏差校正估计值 $\hat{m}_t$ 替换前一个时间步长的动量向量的偏差校正估计值 $\hat{m}_{t-1}$，得到Nadam更新规则：
+
+$$\theta_{t+1} = \theta_{t} - \dfrac{\eta}{\sqrt{\hat{v}_t} + \epsilon} (\beta_1 \hat{m}_t + \dfrac{(1 - \beta_1) g_t}{1 - \beta^t_1})$$
+
+$\hat{v}_t$ 保持不变：
+
+$$v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2 $$
+
+$$\hat{v}_t = \dfrac{v_t}{1 - \beta^t_2}$$
 
 ## 总结
 
@@ -488,21 +568,22 @@ loss表面轮廓图：
 
 ![0](pic/contours_evaluation_optimizers.gif)
 
-如上图所示：Adagrad，Adadelta和RMSprop几乎立刻朝着正确的方向前进，并且同样快速地收敛，而Momentum和NAG则走向偏离轨道，引发了一个滚下山丘的形象。然而，NAG很快就能够通过"向前看"来快速响应并纠正方向，并达到最小值。
+如上图所示：Adagrad，Adadelta和RMSprop几乎立刻朝着正确的方向前进，并且同样快速地收敛，而Momentum和NAG则基于动量的方法的“超调”行为，这使得优化看起来像一个滚下山丘的球。然而，NAG很快就能够通过"向前看"来快速响应并纠正方向，并达到最小值。
 
 鞍点图:
 
 ![11](pic/saddle_point_evaluation_optimizers.gif)
 
-SGD，Momentum和NAG很难破除对称性，尽管后者最终设法摆脱了鞍点，而Adagrad，RMSprop和Adadelta迅速降低了负斜率。
+SGD，Momentum和NAG很难破除对称性，尽管后者最终设法摆脱了鞍点，但只有非常低的梯度，SGD则陷于顶部。而Adagrad，RMSprop和Adadelta迅速降低了负斜率，由于更新中的分母项，增加沿这个方向的有效学习速率，从而帮助算法继续。
 
 自适应学习速率方法，即Adagrad，Adadelta，RMSprop和Adam是最合适的，并为这些情景提供最佳收敛。
 
 ### 算法选择
 
-如果您的输入数据稀少，那么您可能会使用自适应学习率方法中的一种获得最佳结果。另外一个好处是，你不需要调整学习速率，却可以使用默认值得到最佳结果。
+- 如果您的输入数据稀少，那么可能会使用自适应学习率方法中的一种获得最佳结果。另外一个好处是，你不需要调整学习速率，却可以使用默认值得到最佳结果。
 
-总之，RMSprop是Adagrad的延伸，它处理其学习速度急剧下降的问题。它与Adadelta相同，只是Adadelta在分子更新规则中使用RMS参数更新。 Adam最后为RMSprop增加了偏差修正和动量。就此而言，RMSprop，Adadelta和Adam是非常相似的算法，在相似的情况下效果很好。 偏差修正有助于Adam在优化结束时略微优于RMSprop，因为梯度变得更加稀疏。就目前而言，Adam可能是最好的综合选择。
+- RMSprop是Adagrad的延伸，它处理其学习速度急剧下降的问题。它与Adadelta相同，只是Adadelta在分子更新规则中使用RMS参数更新。 Adam最后为RMSprop增加了偏差修正和动量。就此而言，RMSprop，Adadelta和Adam是非常相似的算法，在相似的情况下效果都很好。 偏差修正有助于Adam在优化结束时略微优于RMSprop，因为梯度变得更加稀疏。就三者而言，Adam可能是最好的综合选择。
+- Nadam对学习率有了更强的约束，同时对梯度的更新也有更直接的影响。一般而言，在想使用带动量的RMSprop，或者Adam的地方，大多可以使用Nadam取得更好的效果。
 
 **参考资料：**
 
